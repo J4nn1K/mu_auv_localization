@@ -1,0 +1,46 @@
+<launch>
+<!-- camera and image processing for real world need to be launched seperately -->
+<!-- in simulation, these get launched automatically when spawning vehicle model-->
+
+  <!-- arguments -->
+  <arg name="vehicle_name" default="uuv00"/>
+
+  <!-- camera/image processing specific-->
+  <arg name="camera_name" default="camera" />
+  <arg name="image_topic" default="image_raw" />
+
+  <!-- known tags for AprilTag algorithm  -->
+  <arg name="less_tags" default="false" />
+  <arg if="$(arg less_tags)" name="tag_file" value="$(find mu_auv_localization)/config/less_tags_standalone.yaml" />
+  <arg unless="$(arg less_tags)" name="tag_file" value="$(find mu_auv_localization)/config/tags_standalone.yaml" />
+
+  <!-- EKF specific -->
+  <arg name="process_model" default="simple" />
+  <arg name="measurement_model" default="dist" />
+
+  <group ns="$(arg camera_name)">
+    <!-- start AprilTag Algorithm -->
+    <node pkg="apriltag_ros"
+            type="apriltag_ros_continuous_node"
+            name="apriltag_node"
+            clear_params="true"
+            output="screen">
+        <rosparam command="load" file="$(find apriltag_ros)/config/settings.yaml"/>
+        <rosparam command="load" file="$(arg tag_file)"/>
+        <!-- <remap from="image_rect" to="$(arg camera_name)/$(arg image_topic)"/> -->
+        <remap from="image_rect" to="$(arg image_topic)"/>
+        <param name="camera_frame" value="$(arg vehicle_name)/$(arg camera_name)/camera_frame"/>
+        <param name="publish_tag_detections_image" value="true"/>
+    </node>
+  </group>
+
+  <!-- start EKF -->
+  <include file="$(find mu_auv_localization)/launch/vision_ekf.launch">
+    <arg name="vehicle_name" value="$(arg vehicle_name)"/>
+    <arg name="camera_name" value="$(arg camera_name)"/>
+
+    <arg name="process_model" value="$(arg process_model)" />
+    <arg name="measurement_model" value="$(arg measurement_model)" />
+  </include> 
+
+</launch>

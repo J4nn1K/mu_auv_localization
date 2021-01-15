@@ -3,7 +3,6 @@ from __future__ import print_function
 import numpy as np
 import rospy
 import tf.transformations
-import tf2_ros
 import tf2_geometry_msgs
 
 from hippocampus_common.node import Node
@@ -30,15 +29,17 @@ class EKFNode(Node):
         self.lock = threading.Lock()
         self.t_last_prediction = rospy.get_time()
 
-        self.tf_helper = TfHelper()
-        self.tf_buffer = tf2_ros.Buffer()
-        self._base_link_id = self.tf_helper.get_base_link_id()
+        # get parameters
+        self.camera_name = rospy.get_param('~camera_name', 'vertical_camera')
         self.publish_ekf_states = rospy.get_param('~publish_ekf_states', 'True')
-
-        self.tags = self._load_tag_poses()
-
         self.meas_model_type = rospy.get_param('~measurement_model', 'dist')
         self.process_model_type = rospy.get_param('~process_model', 'simple')
+        self.tags = self._load_tag_poses()
+
+        self.tag_detections_topic = rospy.get_param('~tag_detections_topic',
+                                                    'camera/tag_detections')
+
+        self.tf_helper = TfHelper(rospy.get_param('~vehicle_name', 'uuv00'))
 
         # choose measurement model
         if self.meas_model_type == "dist":
@@ -94,7 +95,7 @@ class EKFNode(Node):
                          Imu,
                          self.imu_callback,
                          queue_size=1)
-        rospy.Subscriber("tag_detections",
+        rospy.Subscriber(self.tag_detections_topic,
                          AprilTagDetectionArray,
                          self.apriltag_callback,
                          queue_size=1)
@@ -122,9 +123,10 @@ class EKFNode(Node):
 
                     # tranform tag pose
                     transform = self.tf_helper.\
-                        get_camera_frame_to_base_link_tf()
+                        get_camera_frame_to_base_link_tf(self.camera_name)
                     tag_pose_in_base_link = tf2_geometry_msgs.do_transform_pose(
                         tag.pose.pose, transform)
+
                     position_tag_in_base_link = np.array([
                         tag_pose_in_base_link.pose.position.x,
                         tag_pose_in_base_link.pose.position.y,
@@ -295,7 +297,7 @@ class EKFNode(Node):
         t.twist.twist.angular.z = ekf_state[11]
         t.twist.covariance = np.ndarray.tolist(np.ndarray.flatten(cov_twist))
         t.header.stamp = rospy.Time.now()
-        t.header.frame_id = self._base_link_id
+        t.header.frame_id = self.tf_helper.get_base_link_id()
         self.ekf_twist_pub.publish(t)
 
     def _load_ekf_params_dist(self):

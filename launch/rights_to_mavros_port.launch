@@ -1,3 +1,0 @@
-<launch>
-    <node name="test" pkg="mu_auv_localization" type="give_rights.sh" />
-</launch>
