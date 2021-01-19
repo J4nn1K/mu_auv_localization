@@ -1,0 +1,27 @@
+<launch>
+    <!-- Camera needs to be started on klopsi-main -->
+
+    <arg name="vehicle_name" default="klopsi" />
+    <arg name="vehicle_type" default="hippocampus" /> <!-- only vertical camera -->
+
+    <!-- camera/image processing specific-->
+    <arg name="camera_name" default="vertical_camera" />
+    <arg name="do_rectify" default="true" />
+    <arg name="image_raw_topic" default="image_offboard" />
+    <arg name="image_rect_topic" default="image_rect" />
+
+    <!-- EKF specific -->
+    <arg name="process_model" default="simple" />
+
+    <group ns="$(arg vehicle_name)">
+        <param name="vehicle_name" value="$(arg vehicle_name)" />
+        <param name="vehicle_type" value="$(arg vehicle_type)" />
+        <include file="$(find hippocampus_common)/launch/tf_publisher.launch" pass_all_args="true" />
+        <include file="$(find hippocampus_common)/launch/image_decoding.launch" pass_all_args="true">
+            <arg name="output_topic" value="$(arg image_raw_topic)" />
+        </include>
+        <include file="$(find mu_auv_localization)/launch/localization.launch" pass_all_args="true" />
+        
+    </group>
+
+</launch>

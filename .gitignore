@@ -1,3 +1,4 @@
 muAUV_localization.code-workspace
 .vscode/
 *.pyc
+.idea/

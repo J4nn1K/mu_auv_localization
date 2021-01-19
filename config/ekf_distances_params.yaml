@@ -1,0 +1,65 @@
+ekf: {
+                # ekf using distances and yaw as measurements
+                dim_meas: 2,
+                dim_state: 12,
+
+                x0:
+                        {
+                                x: 1.0,
+                                y: 1.0,
+                                z: 0.0,
+                                roll: 0.0,
+                                pitch: 0.0,
+                                yaw: 0.0,
+                                dx: 0.0,
+                                dy: 0.0,
+                                dz: 0.0,
+                                droll: 0.0,
+                                dpitch: 0.0,
+                                dyaw: 0.0,
+                        },
+
+                # state covariance P0 parameters
+                p_mat:
+                        {
+                                sig_x: 0.2,
+                                sig_y: 0.2,
+                                sig_z: 0.2,
+                                sig_roll: 0.1,
+                                sig_pitch: 0.1,
+                                sig_yaw: 0.1,
+                                sig_dx: 0.1,
+                                sig_dy: 0.1,
+                                sig_dz: 0.1,
+                                sig_droll: 0.1,
+                                sig_dpitch: 0.1,
+                                sig_dyaw: 0.1,
+                        },
+                # process noise covariance V parameters
+                v_mat: {
+                                sig_v_x: 0.05, # 0.05,
+                                sig_v_y: 0.05,
+                                sig_v_z: 0.03, # 0.03,
+                                sig_v_roll: 0.01,
+                                sig_v_pitch: 0.01,
+                                sig_v_yaw: 0.01,
+                                sig_v_dx: 0.3,
+                                sig_v_dy: 0.1,
+                                sig_v_dz: 0.1,
+                                sig_v_droll: 0.01,
+                                sig_v_dpitch: 0.01,
+                                sig_v_dyaw: 0.01,
+                        },
+                # VISION: measurement noise covariance W parameters
+                w_mat: {
+                                sig_w_dist: 0.1,
+                                sig_w_yaw: 0.1,
+                                # penalty factor for dynamic measurement noise
+                                c_penalty_dist: 5.0,
+                                c_penalty_yaw: 5.0,
+                        },
+                # ORIENTATION: measurement noise covariance W parameters
+                w_mat_orient: { sig_w_roll: 0.1, sig_w_pitch: 0.1 },
+        }
+# add more
+
