@@ -30,16 +30,19 @@ class EKFNode(Node):
         self.t_last_prediction = rospy.get_time()
 
         # get parameters
-        self.camera_name = rospy.get_param('~camera_name', 'vertical_camera')
-        self.publish_ekf_states = rospy.get_param('~publish_ekf_states', 'True')
-        self.meas_model_type = rospy.get_param('~measurement_model', 'dist')
-        self.process_model_type = rospy.get_param('~process_model', 'simple')
+        self.camera_name = self.get_param("~camera_name", "vertical_camera")
+        self.publish_ekf_states = self.get_param("~publish_ekf_states", "True")
+        self.meas_model_type = self.get_param("~measurement_model", "dist")
+        self.process_model_type = self.get_param("~process_model", "simple")
         self.tags = self._load_tag_poses()
 
-        self.tag_detections_topic = rospy.get_param('~tag_detections_topic',
-                                                    'camera/tag_detections')
-
-        self.tf_helper = TfHelper(rospy.get_param('~vehicle_name', 'uuv00'))
+        vehicle_name = self.get_param("vehicle_name")
+        if vehicle_name is None:
+            rospy.logfatal("[%s] No vehicle name specified! Exiting...",
+                           rospy.get_name())
+            rospy.signal_shutdown("Required vehicle name not specified.")
+            exit(1)
+        self.tf_helper = TfHelper(vehicle_name)
 
         # choose measurement model
         if self.meas_model_type == "dist":
@@ -53,9 +56,9 @@ class EKFNode(Node):
                 dim_state, dim_meas, w_mat, c_penalty_dist, c_penalty_yaw,
                 w_mat_orient)
         else:
-            rospy.logerr("[{}] Choose valid measurement model.".format(
+            rospy.logfatal("[{}] Choose valid measurement model.".format(
                 rospy.get_name()))
-            exit(-1)
+            exit(1)
 
         # choose process model
         if self.process_model_type == "simple":
@@ -68,9 +71,9 @@ class EKFNode(Node):
                 .format(rospy.get_name()))
             process_model = ProcessModelVelocities(dim_state, dim_meas, v_mat)
         else:
-            rospy.logerr("[{}] Choose valid process model.".format(
+            rospy.logfatal("[{}] Choose valid process model.".format(
                 rospy.get_name()))
-            exit(-1)
+            exit(1)
 
         # initialize EKF
         self.ekf = ExtendedKalmanFilter(dim_state, dim_meas, measurement_model,
@@ -95,7 +98,7 @@ class EKFNode(Node):
                          Imu,
                          self.imu_callback,
                          queue_size=1)
-        rospy.Subscriber(self.tag_detections_topic,
+        rospy.Subscriber("tag_detections",
                          AprilTagDetectionArray,
                          self.apriltag_callback,
                          queue_size=1)
@@ -178,7 +181,8 @@ class EKFNode(Node):
             pose_msg.pose.orientation.x, pose_msg.pose.orientation.y,
             pose_msg.pose.orientation.z, pose_msg.pose.orientation.w
         ]
-        roll, pitch, yaw = tf.transformations.euler_from_quaternion(orientation)
+        roll, pitch, yaw = tf.transformations.euler_from_quaternion(
+            orientation)
         measurements = np.array([roll, pitch]).reshape((-1, 1))
 
         # do prediction + update step of EKF
@@ -229,7 +233,6 @@ class EKFNode(Node):
         with self.lock:
             estimation = self.ekf.get_x_est()
             cov = self.ekf.get_p_mat()[:6, :6]
-            # print('cov: ', cov)
 
         position = estimation[:3]
         roll = estimation[3]
@@ -272,9 +275,8 @@ class EKFNode(Node):
             cov_pose = cov[:6, :6]
             cov_twist = cov[6:, 6:]
 
-        quat = tf.transformations.quaternion_from_euler(ekf_state[3],
-                                                        ekf_state[4],
-                                                        ekf_state[5])
+        quat = tf.transformations.quaternion_from_euler(
+            ekf_state[3], ekf_state[4], ekf_state[5])
         p = PoseWithCovarianceStamped()
         p.pose.pose.position.x = ekf_state[0]
         p.pose.pose.position.y = ekf_state[1]
@@ -302,40 +304,40 @@ class EKFNode(Node):
 
     def _load_ekf_params_dist(self):
 
-        dim_meas = EKFNode.get_param('~ekf/dim_meas')
-        dim_state = EKFNode.get_param('~ekf/dim_state')
+        dim_meas = EKFNode.get_param("~ekf/dim_meas")
+        dim_state = EKFNode.get_param("~ekf/dim_state")
 
         # initial state
-        x = self.get_param('~ekf/x0/x')
-        y = self.get_param('~ekf/x0/y')
-        z = self.get_param('~ekf/x0/z')
-        roll = self.get_param('~ekf/x0/roll')
-        pitch = self.get_param('~ekf/x0/pitch')
-        yaw = self.get_param('~ekf/x0/yaw')
-        dx = self.get_param('~ekf/x0/dx')
-        dy = self.get_param('~ekf/x0/dy')
-        dz = self.get_param('~ekf/x0/dz')
-        droll = self.get_param('~ekf/x0/droll')
-        dpitch = self.get_param('~ekf/x0/dpitch')
-        dyaw = self.get_param('~ekf/x0/dyaw')
+        x = self.get_param("~ekf/x0/x")
+        y = self.get_param("~ekf/x0/y")
+        z = self.get_param("~ekf/x0/z")
+        roll = self.get_param("~ekf/x0/roll")
+        pitch = self.get_param("~ekf/x0/pitch")
+        yaw = self.get_param("~ekf/x0/yaw")
+        dx = self.get_param("~ekf/x0/dx")
+        dy = self.get_param("~ekf/x0/dy")
+        dz = self.get_param("~ekf/x0/dz")
+        droll = self.get_param("~ekf/x0/droll")
+        dpitch = self.get_param("~ekf/x0/dpitch")
+        dyaw = self.get_param("~ekf/x0/dyaw")
 
         x0 = np.array(
             [x, y, z, roll, pitch, yaw, dx, dy, dz, droll, dpitch,
              dyaw]).reshape((-1, 1))
 
         # state covariance P0 params
-        sig_x = self.get_param('~ekf/p_mat/sig_x')
-        sig_y = self.get_param('~ekf/p_mat/sig_y')
-        sig_z = self.get_param('~ekf/p_mat/sig_z')
-        sig_roll = self.get_param('~ekf/p_mat/sig_roll')
-        sig_pitch = self.get_param('~ekf/p_mat/sig_pitch')
-        sig_yaw = self.get_param('~ekf/p_mat/sig_yaw')
-        sig_dx = self.get_param('~ekf/p_mat/sig_dx')
-        sig_dy = self.get_param('~ekf/p_mat/sig_dy')
-        sig_dz = self.get_param('~ekf/p_mat/sig_dz')
-        sig_droll = self.get_param('~ekf/p_mat/sig_droll')
-        sig_dpitch = self.get_param('~ekf/p_mat/sig_dpitch')
-        sig_dyaw = self.get_param('~ekf/p_mat/sig_dyaw')
+        sig_x = self.get_param("~ekf/p_mat/sig_x")
+        sig_y = self.get_param("~ekf/p_mat/sig_y")
+        sig_z = self.get_param("~ekf/p_mat/sig_z")
+        sig_roll = self.get_param("~ekf/p_mat/sig_roll")
+        sig_pitch = self.get_param("~ekf/p_mat/sig_pitch")
+        sig_yaw = self.get_param("~ekf/p_mat/sig_yaw")
+        sig_dx = self.get_param("~ekf/p_mat/sig_dx")
+        sig_dy = self.get_param("~ekf/p_mat/sig_dy")
+        sig_dz = self.get_param("~ekf/p_mat/sig_dz")
+        sig_droll = self.get_param("~ekf/p_mat/sig_droll")
+        sig_dpitch = self.get_param("~ekf/p_mat/sig_dpitch")
+        sig_dyaw = self.get_param("~ekf/p_mat/sig_dyaw")
 
         p0_mat = np.array(
             np.diag([
@@ -345,18 +347,18 @@ class EKFNode(Node):
             ]))
 
         # process noise
-        sig_v_x = self.get_param('~ekf/v_mat/sig_v_x')
-        sig_v_y = self.get_param('~ekf/v_mat/sig_v_y')
-        sig_v_z = self.get_param('~ekf/v_mat/sig_v_z')
-        sig_v_roll = self.get_param('~ekf/v_mat/sig_v_roll')
-        sig_v_pitch = self.get_param('~ekf/v_mat/sig_v_pitch')
-        sig_v_yaw = self.get_param('~ekf/v_mat/sig_v_yaw')
-        sig_v_dx = self.get_param('~ekf/v_mat/sig_v_dx')
-        sig_v_dy = self.get_param('~ekf/v_mat/sig_v_dy')
-        sig_v_dz = self.get_param('~ekf/v_mat/sig_v_dz')
-        sig_v_droll = self.get_param('~ekf/v_mat/sig_v_droll')
-        sig_v_dpitch = self.get_param('~ekf/v_mat/sig_v_dpitch')
-        sig_v_dyaw = self.get_param('~ekf/v_mat/sig_v_dyaw')
+        sig_v_x = self.get_param("~ekf/v_mat/sig_v_x")
+        sig_v_y = self.get_param("~ekf/v_mat/sig_v_y")
+        sig_v_z = self.get_param("~ekf/v_mat/sig_v_z")
+        sig_v_roll = self.get_param("~ekf/v_mat/sig_v_roll")
+        sig_v_pitch = self.get_param("~ekf/v_mat/sig_v_pitch")
+        sig_v_yaw = self.get_param("~ekf/v_mat/sig_v_yaw")
+        sig_v_dx = self.get_param("~ekf/v_mat/sig_v_dx")
+        sig_v_dy = self.get_param("~ekf/v_mat/sig_v_dy")
+        sig_v_dz = self.get_param("~ekf/v_mat/sig_v_dz")
+        sig_v_droll = self.get_param("~ekf/v_mat/sig_v_droll")
+        sig_v_dpitch = self.get_param("~ekf/v_mat/sig_v_dpitch")
+        sig_v_dyaw = self.get_param("~ekf/v_mat/sig_v_dyaw")
 
         v_mat = np.array(
             np.diag([
@@ -366,18 +368,18 @@ class EKFNode(Node):
             ]))
 
         # measurement noise
-        sig_w_dist = self.get_param('~ekf/w_mat/sig_w_dist')
-        sig_w_yaw = self.get_param('~ekf/w_mat/sig_w_yaw')
+        sig_w_dist = self.get_param("~ekf/w_mat/sig_w_dist")
+        sig_w_yaw = self.get_param("~ekf/w_mat/sig_w_yaw")
 
-        c_penalty_dist = self.get_param('~ekf/w_mat/c_penalty_dist')
-        c_penalty_yaw = self.get_param('~ekf/w_mat/c_penalty_yaw')
+        c_penalty_dist = self.get_param("~ekf/w_mat/c_penalty_dist")
+        c_penalty_yaw = self.get_param("~ekf/w_mat/c_penalty_yaw")
 
         w_mat_vision = np.array(np.diag([sig_w_dist**2, sig_w_yaw**2]))
 
         # measurement noise orientation
         # (using data from mavros/local_position/pose)
-        sig_w_roll = self.get_param('~ekf/w_mat_orient/sig_w_roll')
-        sig_w_pitch = self.get_param('~ekf/w_mat_orient/sig_w_pitch')
+        sig_w_roll = self.get_param("~ekf/w_mat_orient/sig_w_roll")
+        sig_w_pitch = self.get_param("~ekf/w_mat_orient/sig_w_pitch")
 
         w_mat_orient = np.array(np.diag([sig_w_roll**2, sig_w_pitch**2]))
 
@@ -386,7 +388,7 @@ class EKFNode(Node):
 
     def _load_tag_poses(self):
 
-        tag_poses = rospy.get_param('~tag_poses')
+        tag_poses = self.get_param("~tag_poses")
 
         # initialize tags matrix:
         # each row contains id, x, y, z, qw, qx, qy, qz for this tag

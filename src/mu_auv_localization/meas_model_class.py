@@ -76,8 +76,9 @@ class MeasurementModelDistances(object):
             z_est = np.array([x_est[9], x_est[10], x_est[11]]).reshape((-1, 1))
         else:
             # measurement is: angular velocities and linear accelerations
-            print('using linear acceleration measurements from IMU! ' +
-                  'Not implemented yet')
+            rospy.logfatal(
+                "[%s] Using linear acceleration measurements from IMU!" +
+                "Not implemented yet", rospy.get_name())
         return z_est
 
     def h_jacobian_imu_data(self, using_lin_acc=False):
@@ -88,8 +89,9 @@ class MeasurementModelDistances(object):
             h_mat[1, 10] = 1.0
             h_mat[2, 11] = 1.0
         else:
-            print('using linear acceleration measurements from IMU! ' +
-                  'Not implemented yet')
+            rospy.logfatal(
+                "[%s] Using linear acceleration measurements from IMU! " +
+                "Not implemented yet", rospy.get_name())
 
         return h_mat  # dim [3 X dim_state]
 
@@ -127,6 +129,6 @@ class MeasurementModelDistances(object):
 
     def get_dist(self, x_est, tag_pos):
         # dist = sqrt((x - x_tag) ^ 2 + (y - y_tag) ^ 2 + (z - z_tag) ^ 2)
-        dist = np.sqrt((x_est[0] - tag_pos[0])**2 + (x_est[1] - tag_pos[1])**2 +
-                       (x_est[2] - tag_pos[2])**2)
+        dist = np.sqrt((x_est[0] - tag_pos[0])**2 +
+                       (x_est[1] - tag_pos[1])**2 + (x_est[2] - tag_pos[2])**2)
         return dist

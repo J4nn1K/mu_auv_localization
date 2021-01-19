@@ -1,17 +1,17 @@
 <launch>
-    <arg name="vehicle_name" default="uuv00" />
-    <arg name="camera_name" default="camera" />
+    <arg name="camera_name" doc="Used as prefix for the tag detections and for correctly resolving the camera transformations. Typically either 'vertical_camera' or 'front_camera'" />
 
+    <arg name="tag_detections_topic" default="$(arg camera_name)/tag_detections" />
     <arg name="process_model" default="simple" />
     <arg name="measurement_model" default="dist" />
 
     <!-- start EKF -->
     <node pkg="mu_auv_localization" type="vision_ekf_node" name="vision_ekf_node" clear_params="true" output="screen">
-        <param name="tag_detections_topic" type="str" value="$(arg camera_name)/tag_detections"/>
-        <param name="camera_name" type="str" value="$(arg camera_name)"/>
-        <param name="measurement_model" type="str" value="$(arg measurement_model)"/>
-        <param name="process_model" type="str" value="$(arg process_model)"/>
-        <rosparam command="load" file="$(find mu_auv_localization)/config/tag_poses.yaml"/>
-        <rosparam command="load" file="$(find mu_auv_localization)/config/ekf_distances_params.yaml"/>
+        <remap from="tag_detections" to="$(arg tag_detections_topic)" />
+        <param name="camera_name" type="str" value="$(arg camera_name)" />
+        <param name="measurement_model" type="str" value="$(arg measurement_model)" />
+        <param name="process_model" type="str" value="$(arg process_model)" />
+        <rosparam command="load" file="$(find mu_auv_localization)/config/tag_poses.yaml" />
+        <rosparam command="load" file="$(find mu_auv_localization)/config/ekf_distances_params.yaml" />
     </node>
 </launch>
