@@ -2,7 +2,7 @@
     <!-- Camera needs to be started on klopsi-main -->
 
     <arg name="vehicle_name" default="klopsi" />
-    <arg name="vehicle_type" default="hippocampus" /> <!-- only vertical camera -->
+    <arg name="vehicle_type" default="hippocampus" />
 
     <!-- camera/image processing specific-->
     <arg name="camera_name" default="vertical_camera" />
@@ -22,6 +22,11 @@
         </include>
         <include file="$(find mu_auv_localization)/launch/localization.launch" pass_all_args="true" />
         
+        <!-- Convert orientation from quaternion to roll, pitch, yaw -->
+        <node pkg="hippocampus_common" type="pose_to_rpy_node" name="pose_to_rpy_node" output="screen">
+            <param name="pose_msg_type" value="PoseWithCovarianceStamped"/>
+            <remap from="pose" to="mavros/vision_pose/pose_cov"/>
+        </node>
     </group>
 
 </launch>

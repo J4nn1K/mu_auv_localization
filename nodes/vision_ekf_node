@@ -397,9 +397,9 @@ class EKFNode(Node):
 
         for tag in tag_poses:
             # assuming tag pose is in map frame for now
-            tags[tag['id'], :] = np.array([
-                tag['id'], tag['x'], tag['y'], tag['z'], tag['qx'], tag['qy'],
-                tag['qz'], tag['qw']
+            tags[tag["id"], :] = np.array([
+                tag["id"], tag["x"], tag["y"], tag["z"], tag["qx"], tag["qy"],
+                tag["qz"], tag["qw"]
             ])
         return tags
 

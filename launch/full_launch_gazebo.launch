@@ -3,6 +3,7 @@
   <arg name="vehicle_type" default="hippocampus" />
   <arg name="vehicle_name" default="uuv00" />
   <arg name="camera_name" default="vertical_camera" />
+  <arg name="do_rectify" value="false" />
 
   <!-- use gazebo gui or rviz -->
   <arg name="gui" default="true" />
@@ -38,22 +39,22 @@
 
   <!-- launch robot specific nodes in namespace -->
   <group ns="$(arg vehicle_name)">
+    <param name="vehicle_name" value="$(arg vehicle_name)" />
+    <param name="vehicle_type" value="$(arg vehicle_type)" />
 
     <!-- start tf publisher -->
-    <include file="$(find hippocampus_common)/launch/tf_publisher.launch" >
-        <arg name="vehicle_name" value="$(arg vehicle_name)" />
-        <arg name="vehicle_type" value="$(arg vehicle_type)" />
+    <include file="$(find hippocampus_common)/launch/tf_publisher.launch" pass_all_args="true">
     </include>
 
     <!-- start localization -->
-    <include file="$(find mu_auv_localization)/launch/localization.launch">
-        <arg name="vehicle_name" value="$(arg vehicle_name)" />
-        <arg name="camera_name" value="$(arg camera_name)" />
-
-        <arg name="process_model" value="$(arg process_model)" />
-        <arg name="measurement_model" value="$(arg measurement_model)" />
-        <arg name="less_tags" value="$(arg less_tags)" />
+    <include file="$(find mu_auv_localization)/launch/localization.launch" pass_all_args="true">
     </include>
+
+    <!-- Convert orientation from quaternion to roll, pitch, yaw -->
+    <node pkg="hippocampus_common" type="pose_to_rpy_node" name="pose_to_rpy_node" output="screen">
+        <param name="pose_msg_type" value="PoseWithCovarianceStamped"/>
+        <remap from="pose" to="mavros/vision_pose/pose_cov"/>
+    </node>
 
   </group>
 
