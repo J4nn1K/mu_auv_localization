@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(mu_auv_localization)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -10,3 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_python_setup()
+catkin_package()
+catkin_install_python(PROGRAMS
+  nodes/vision_ekf_node
+  scripts/generate_tag_poses_yaml
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
