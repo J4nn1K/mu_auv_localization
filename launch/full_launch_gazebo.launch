@@ -51,11 +51,7 @@
     </include>
 
     <!-- Convert orientation from quaternion to roll, pitch, yaw -->
-    <node pkg="hippocampus_common" type="pose_to_rpy_node" name="pose_to_rpy_node" output="screen">
-        <param name="pose_msg_type" value="PoseWithCovarianceStamped"/>
-        <remap from="pose" to="mavros/vision_pose/pose_cov"/>
-    </node>
-
+    <include file="$(find hippocampus_common)/launch/quat_to_rpy.launch"/>
   </group>
 
 </launch>
