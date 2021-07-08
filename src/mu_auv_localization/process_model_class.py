@@ -130,6 +130,6 @@ class ProcessModelVelocities(ProcessModel):
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         ],
-                     dtype=np.float)
+                     dtype=float)
 
         return A  # dim [dim_state X dim_state]
