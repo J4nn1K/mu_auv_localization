@@ -13,6 +13,7 @@ catkin_python_setup()
 catkin_package()
 catkin_install_python(PROGRAMS
   nodes/vision_ekf_node
+  nodes/vision_estimator_node
   scripts/generate_tag_poses_yaml
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

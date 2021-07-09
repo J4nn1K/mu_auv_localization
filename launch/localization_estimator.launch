@@ -1,0 +1,41 @@
+<launch>
+    <!-- camera and image processing for real world need to be launched seperately -->
+    <!-- in simulation, these get launched automatically when spawning vehicle model -->
+
+    <!-- arguments -->
+    <arg name="vehicle_name" doc="Something like 'uuv04' or 'bluerov.'" />
+
+    <!-- camera/image processing specific-->
+    <arg name="camera_name" doc="Typically 'vertical_camera'. Used as namespace for the AprilTag pipeline." />
+    <arg name="do_rectify" />
+    <arg name="image_raw_topic" default="image_raw" />
+    <arg name="image_rect_topic" default="image_rect" />
+
+    <!-- known tags for AprilTag algorithm  -->
+    <arg name="tag_file" value="$(find mu_auv_localization)/config/tags_bundle.yaml" />
+
+
+    <group ns="$(arg camera_name)">
+        <node if="$(arg do_rectify)" name="image_rectifier" pkg="image_proc" type="image_proc">
+            <remap from="image_raw" to="$(arg image_raw_topic)" />
+            <remap from="image_rect" to="$(arg image_rect_topic)" />
+        </node>
+        <!-- start AprilTag Algorithm -->
+        <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag_node" clear_params="true" output="screen">
+            <rosparam command="load" file="$(find apriltag_ros)/config/settings.yaml" />
+            <rosparam command="load" file="$(arg tag_file)" />
+            <!-- <remap from="image_rect" to="$(arg camera_name)/$(arg image_topic)"/> -->
+            <remap if="$(arg do_rectify)" from="image_rect" to="$(arg image_rect_topic)" />
+            <remap unless="$(arg do_rectify)" from="image_rect" to="$(arg image_raw_topic)" />
+            <param name="camera_frame" value="$(arg vehicle_name)/$(arg camera_name)/camera_frame" />
+            <param name="publish_tag_detections_image" value="true" />
+        </node>
+    </group>
+
+    <!-- start EKF -->
+    <arg name="tag_detections_topic" default="$(arg camera_name)/tag_detections" />
+    <node pkg="mu_auv_localization" type="vision_estimator_node" name="vision_ekf" output="screen">
+        <remap from="tag_detections" to="$(arg tag_detections_topic)" />
+    </node>
+
+</launch>
