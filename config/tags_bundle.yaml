@@ -693,4 +693,4 @@ tag_bundles:
           y: 3.21,
           z: -1.3,
         }
-    name: gazebo_bundle
+    name: floor_bundle

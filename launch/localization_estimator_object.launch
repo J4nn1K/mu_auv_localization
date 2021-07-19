@@ -34,7 +34,7 @@
 
     <!-- start EKF -->
     <arg name="tag_detections_topic" default="$(arg camera_name)/tag_detections" />
-    <node pkg="mu_auv_localization" type="vision_estimator_node" name="vision_ekf" output="screen">
+    <node pkg="mu_auv_localization" type="vision_estimator_node_for_object" name="vision_ekf_object" output="screen">
         <remap from="tag_detections" to="$(arg tag_detections_topic)" />
     </node>
 
