@@ -27,10 +27,10 @@ class VisionEstimatorNode(Node):
         self.t_last_prediction = rospy.get_time()
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
-        self.tf_buffer.lookup_transform(target_frame="map_ned",
-                                        source_frame="map",
-                                        time=rospy.Time(0),
-                                        timeout=rospy.Duration(10))
+        # self.tf_buffer.lookup_transform(target_frame="map_ned",
+        #                                 source_frame="map",
+        #                                 time=rospy.Time(0),
+        #                                 timeout=rospy.Duration(10))
         self.ekf = ExtendedKalmanFilter([0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0])
 
         self.vision_pose_pub = rospy.Publisher("mavros/vision_pose/pose",
