@@ -2,6 +2,7 @@
 # DO NOT USE AT THE MOMENT. STILL WORK IN PROGRESS.
 import threading
 
+import math
 import numpy as np
 import rospy
 import tf2_geometry_msgs
@@ -67,7 +68,11 @@ class VisionEstimatorNode(Node):
                 time=rospy.Time(0),
                 timeout=rospy.Duration(1))
             translation = transform.transform.translation
+            # rotate object frame
             quat = transform.transform.rotation
+            # quat_rot = tf.transformations.quaternion_from_euler(math.pi/2, 0, math.pi/2)
+            # quat = tf.transformations.quaternion_multiply(quat_rot, quat_orig)
+
             measurement = np.array([
                 translation.x, translation.y, translation.z, quat.x, quat.y,
                 quat.z, quat.w
@@ -87,6 +92,8 @@ class VisionEstimatorNode(Node):
         position = estimation[:3]
         orientation = estimation[3:7]
         pose = PoseStamped()
+        q_rot = tf.transformations.quaternion_from_euler(-np.pi/2, 0, -np.pi/2, axes="rxyz")
+        orientation = tf.transformations.quaternion_multiply(orientation, q_rot)
         pose.pose.position.x = position[0]
         pose.pose.position.y = position[1]
         pose.pose.position.z = position[2]
