@@ -37,6 +37,7 @@ class VisionEstimatorNode(Node):
         self.ekf = ExtendedKalmanFilter([0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0])
 
         self.vision_pose_pub = rospy.Publisher("object_pose", PoseStamped)
+        # self.vision_pose_pub = rospy.Publisher("{}/pose_from_object".format(self.vehicle_name), PoseStamped)
 
         rospy.Subscriber("tag_detections",
                          AprilTagDetectionArray,
@@ -61,17 +62,17 @@ class VisionEstimatorNode(Node):
 
         if detection_count:
             transform = self.tf_buffer.lookup_transform(
+                # --- fuer Position von Objekt in Fahrzeug-Frame:
                 target_frame="{}/base_link".format(self.vehicle_name),
                 source_frame="object_bundle",
-                # target_frame="object_bundle",
-                # source_frame="{}/base_link".format(self.vehicle_name),
+                # --- fuer Position von Fahrzeug in Objekt-Frame
+                #target_frame="object_bundle",
+                #source_frame="{}/base_link".format(self.vehicle_name),
+                
                 time=rospy.Time(0),
                 timeout=rospy.Duration(1))
             translation = transform.transform.translation
-            # rotate object frame
             quat = transform.transform.rotation
-            # quat_rot = tf.transformations.quaternion_from_euler(math.pi/2, 0, math.pi/2)
-            # quat = tf.transformations.quaternion_multiply(quat_rot, quat_orig)
 
             measurement = np.array([
                 translation.x, translation.y, translation.z, quat.x, quat.y,
@@ -102,15 +103,17 @@ class VisionEstimatorNode(Node):
         pose.pose.orientation.z = orientation[2]
         pose.pose.orientation.w = orientation[3]
         pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "{}/base_link".format(self.vehicle_name) #"object"
+        pose.header.frame_id = "{}/base_link".format(self.vehicle_name) 
+        #pose.header.frame_id = "object_frame"
         
-        self.vision_pose_pub.publish(pose)
+        # self.vision_pose_pub.publish(pose)
 
         transform = TransformStamped()
         transform.transform.translation = pose.pose.position
         transform.transform.rotation = pose.pose.orientation
         transform.header = pose.header
         transform.child_frame_id = "object_frame"
+        #transform.child_frame_id = "{}/base_link_from_object".format(self.vehicle_name)
         
         self.tf_broadcaster.sendTransform(transform)
 
