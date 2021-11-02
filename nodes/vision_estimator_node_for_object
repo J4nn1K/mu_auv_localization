@@ -103,7 +103,7 @@ class VisionEstimatorNode(Node):
         pose.pose.orientation.z = orientation[2]
         pose.pose.orientation.w = orientation[3]
         pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "{}/base_link".format(self.vehicle_name) 
+        pose.header.frame_id = "{}/base_link_from_object".format(self.vehicle_name) 
         #pose.header.frame_id = "object_frame"
         
         # self.vision_pose_pub.publish(pose)
